@@ -32,8 +32,7 @@
     <SccLocalPath>Svn</SccLocalPath>
     <SccAuxPath>Svn</SccAuxPath>
     <SccProvider>SubversionScc</SccProvider>
-    <ApplicationIcon>
-    </ApplicationIcon>
+    <ApplicationIcon>jfk.ico</ApplicationIcon>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <OldToolsVersion>3.5</OldToolsVersion>
@@ -237,6 +236,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Ji2.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="jfk.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
