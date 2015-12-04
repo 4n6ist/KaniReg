@@ -97,7 +97,7 @@ namespace KaniReg.Sam {
                         sidList.Add(TransrateSid(Library.ExtractArrayElements(bytes, offset, 12)));
                         count += 12;
                     } else if (0x501 == signature) {
-                        sidList.Add(TransrateSid(Library.ExtractArrayElements(bytes, offset, 26)));
+                        sidList.Add(TransrateSid(Library.ExtractArrayElements(bytes, offset, 28)));
                         count += 28;
                     }
                 }
@@ -144,12 +144,12 @@ namespace KaniReg.Sam {
                 id = new String(replaced.ToArray());
                 // SUBを組み立て
                 builder = new StringBuilder();
-                for (ushort index = 8; index < bytes.Length - 2; index+=4) {
+                for (ushort index = 8; index < bytes.Length - 4; index+=4) {
                     if (0 < builder.Length) { builder.Append("-"); }
                     builder.Append(BitConverter.ToUInt32((Library.ExtractArrayElements(bytes, index, 4)), 0).ToString());
                 }
                 sub = builder.ToString();
-                rid   = BitConverter.ToUInt16((Library.ExtractArrayElements(bytes, 24, 2)), 0).ToString();
+                rid   = BitConverter.ToUInt32((Library.ExtractArrayElements(bytes, 24, 4)), 0).ToString();
                 result = "S-" + revision + "-" + id + "-" + sub + "-" + rid;
             }
 
