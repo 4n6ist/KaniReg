@@ -63,6 +63,11 @@ namespace KaniReg.NtUser {
                 // Windows 7
                 // Known Folder
                 key = this.Key.GetSubkey(@"WallPapers\KnownFolders\0\Windows Wallpapers\MergeFolders");
+                if (key == null)
+                {
+                    this.Reporter.Write("Keyが見つかりませんでした。");
+                    return true;
+                }
                 RegistryValue[] values = key.GetListOfValues();
                 if (null != values && 0 < values.Length) {
                     this.Reporter.Write("壁紙の場所: " + values[0].Name);

@@ -113,11 +113,26 @@ namespace KaniReg
 			ClassBase instance;
 			if (string.IsNullOrEmpty(current))
 			{
-				instance = (ClassBase)Activator.CreateInstance(type, rootKey, _timeZoneBias, _outputUtc, _reporter, _logger);
+				// 引数typeに「<>c」「+<>c」といった不要な文字列が混入し、エラーとなっていた
+				try
+				{
+					instance = (ClassBase)Activator.CreateInstance(type, rootKey, _timeZoneBias, _outputUtc, _reporter, _logger);
+				}
+				catch
+				{
+					return false;
+				}
 			}
 			else
 			{
-				instance = (ClassBase)Activator.CreateInstance(type, rootKey, _timeZoneBias, _outputUtc, _reporter, _logger, current);
+				try
+				{
+					instance = (ClassBase)Activator.CreateInstance(type, rootKey, _timeZoneBias, _outputUtc, _reporter, _logger, current);
+				}
+				catch
+				{
+					return false;
+				}
 			}
 
 			bool result = true;

@@ -76,7 +76,7 @@ namespace KaniReg.SysHive
 			RegistryValue value = key.GetValue("AppCompatCache");
 			
 			uint sig = BitConverter.ToUInt32(Library.ExtractArrayElements(value.Data, 0, 4), 0);
-			Reporter.Write("Signature: 0x" + sig.ToString());
+			Reporter.Write("Signature: 0x" + Convert.ToString(sig, 16));
 
 			#region Debug
 #if DEBUG
@@ -122,6 +122,12 @@ namespace KaniReg.SysHive
 					results = ParseWin7(value.Data);
 					break;
 
+				// Win10
+				case 0x30:
+				case 0x34:
+					results = ParseWin10(value.Data);
+					break;
+				
 				// 本来は判定不能 ＝ 対象外バージョンだが、暫定的に Win8 として扱う
 				default:
 					results = ParseWin8(value.Data);
@@ -472,7 +478,6 @@ namespace KaniReg.SysHive
 
 			var results = new Dictionary<string, Dictionary<string, string>>();
 
-			//for (int i = 0; i < numEntries; ++i)
 			while (pos != data.Length)
 			{
 				// ファイル名の次の2バイトがファイルタイムへのオフセットのパターンとそうでないパターンがある
@@ -480,7 +485,7 @@ namespace KaniReg.SysHive
 				// ファイル名以外に 0 0 0 0 などデータを含む場合、オフセット長さとなるパターン2
 				// パターン2の場合、オフセット分飛んで8バイト不明があり、そのあとにFILETIME（ModTime）
 
-				// WIn8ではキーのバイナリ値の先頭 128バイトがヘッダなので飛ばす
+				// Win8ではキーのバイナリ値の先頭 128バイトがヘッダなので飛ばす
 				// 8 ？？（0x30307473..で始まるパターン
 				// 4 レコード長（次のレコードへのオフセット） この4バイトの次の位置からオフセット分飛ぶと次のレコード(3030Pattern)
 				// 2 Filename Length 可変 Filenameのレングス分のUTF-16LE
@@ -542,6 +547,71 @@ namespace KaniReg.SysHive
 				pos += (int)dataLength + 12; // 3030 パターンの8バイト分とオフセット分の4バイト分をずらす
 			}
 
+			return results;
+		}
+
+		/// <summary>
+		/// parse Win10 data
+		/// </summary>
+		/// <param name="data">Registry data</param>
+		/// <returns>Dictionary(File path, Dictionary(Value type, Value))</returns>
+		private Dictionary<string, Dictionary<string, string>> ParseWin10(byte[] data)
+		{
+			//ヘッダー分を飛ばす
+			int pos = BitConverter.ToInt32(data, 0);
+			var results = new Dictionary<string, Dictionary<string, string>>();
+
+			while (pos != data.Length)
+			{
+				// Win10では、キーのバイナリ値の先頭（0x30または0x34）がヘッダ長なので飛ばす
+				// 以降、Cache entry
+				// 4　Signature（10ts : 0x31307473）
+				// 4　Unknown
+				// 4　Cache entry data size
+				// 2　Path size　
+				//  　Path UTF-16 little-endian string without end-of-character　パス長分飛ばす
+				// 8  Last modified timestamp of executable
+				// 4　Data size
+
+				int offset = 0;
+
+				// 不明な8バイトを飛ばしてデータ長（次レコードへのオフセット）を取得
+				offset += 8;
+				uint dataLength = BitConverter.ToUInt32(data, pos + offset);
+
+				// データ長分ずらしてパスデータ長を取得
+				offset += 4;
+				ushort pathLength = BitConverter.ToUInt16(data, pos + offset);
+
+				// パスデータ長分ずらしてパスを取得
+				offset += 2;
+				string file = Encoding.ASCII.GetString(
+					Library.ExtractArrayElements(data, (ulong)(pos + offset), (ulong)pathLength));
+				file = file.Replace("\0", "");
+				file = Regex.Replace(file, @"^(\\\?\?\\)", "");
+
+				offset += pathLength;
+
+				string modTime;
+
+				modTime = Library.TransrateTimestamp(Library.CalculateTimestamp(
+						BitConverter.ToUInt64(data, pos + offset)), TimeZoneBias, OutputUtc);
+
+				var result = new Dictionary<string, string>();
+
+				result.Add(MOD_TIME, modTime);
+
+				try
+				{
+					results.Add(file + DELIM + modTime, result);
+				}
+				catch (Exception ex)
+				{
+					string msg = ex.Message;
+				}
+
+				pos += (int)dataLength + 12; // 3130 パターンの8バイト分とオフセット分の4バイト分をずらす
+			}
 			return results;
 		}
 	}
