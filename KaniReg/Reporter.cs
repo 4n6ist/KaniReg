@@ -34,9 +34,9 @@ namespace KaniReg
 		public void Write(string message, Encoding inputEncoding)
 		{
 			// inputEncodingで文字列をbyte化
-			byte[] source = inputEncoding.GetBytes(message + "\r\n");
+			// byte[] source = inputEncoding.GetBytes(message + "\r\n");
 			// 余計な文字が混入してくるので出口で消すなら下記
-			//byte[] source = inputEncoding.GetBytes(message.Replace("\0", "").Replace("\x1A", "") + "\r\n");
+			byte[] source = inputEncoding.GetBytes(message.Replace("\0", "").Replace("\x1A", "") + "\r\n");
 			byte[] replaced = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(source));
 
 			// 書き込み
